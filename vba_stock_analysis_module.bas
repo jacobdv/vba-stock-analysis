@@ -1,5 +1,7 @@
 Attribute VB_Name = "Module2"
 Sub stockAnalysis()
+    ' Full variable assignments. Some as longs or longlongs because I was running into overflow errors.
+    ' NEED TO CHANGE SOME TO INTEGERS.
     Dim rowCount As LongLong
     Dim columnCount As Long
     Dim stockCount As Long
@@ -12,11 +14,15 @@ Sub stockAnalysis()
     Dim changePercentage As Double
     Dim ws As Worksheet
     
+    ' FOR LOOP: Full loop to iterate through all the sheets.
     For Each ws In Sheets
         ws.Activate
-        ' Defines default values for some variables.
+        
+        ' Defines default values for variables that reset for each sheet.
         stockCount = 1
         volTotal = 0
+        i = 2
+        yearOpen = 0
     
         ' Counts number of columns and rows with data.
         columnCount = Cells(1, Columns.Count).End(xlToLeft).Column
@@ -28,45 +34,60 @@ Sub stockAnalysis()
         Cells(1, columnCount + 4).Value = "Percent Change"
         Cells(1, columnCount + 5).Value = "Total Stock Volume"
         
-        ' Iterates through stocks, noting when it switches names(increases stockCount).
+        ' FOR LOOP: Iterates through stocks, row by row.
         For i = 2 To rowCount + 1
-            ' If statement for "Ticker" column.
+        
+            ' IF STATEMENT: Checks if stock has changed when switching to a new row.
             If Cells(i - 1, 1).Value <> Cells(i, 1).Value Then
+                ' If the stock HAS changed:
+                ' - increase the count of stocks and add the new stock to the list of stocks.
+                ' - calculate the changePercentage
+                ' - assign values to the columns for yearlyChange and changePercentage (format as %).
+                ' - pull yearOpen data for new stock.
+                ' - assigns volTotal to its column and begins the new volTotal.
+                
+                ' Increase stock count and add new stock to list.
                 stockCount = stockCount + 1
                 Cells(stockCount, columnCount + 2).Value = Cells(i, 1).Value
-                ' This evaluation for "i" not equaling two counteracts first row problems.
-                If i <> 2 Then
+                
+                ' IF STATEMENT: For the first line of each sheet, don't try to pull the previous closing price because it doesn't exist.
+                If i = 2 Then
+                    Debug.Print (i)
+                Else
                     yearClose = Cells(i - 1, 6).Value
                     yearlyChange = yearClose - yearOpen
+                    changePercentage = (yearlyChange / yearOpen)
                     
-                    ' Prevents div by 0 error.
-                    If yearOpen = 0 Then
-                        changePercentage = 0
-                    Else
-                        changePercentage = (yearlyChange / yearOpen)
-                    End If
-                    
-                Cells(stockCount - 1, columnCount + 3).Value = yearlyChange
-                Cells(stockCount - 1, columnCount + 4).Value = changePercentage
-                Cells(stockCount - 1, columnCount + 4).NumberFormat = "0.00%"
-                yearOpen = Cells(i, 3).Value
-                Cells(stockCount - 1, columnCount + 5).Value = volTotal
-                volTotal = 0
-                Else
-                volTotal = volTotal + Cells(i, 7).Value
+                    Debug.Print (yearOpen)
+                    Debug.Print (yearClose)
+                    Debug.Print (yearlyChange)
+                    ' Simple cell assignments for yearlyChange and changePercentage.
+                    Cells(stockCount - 1, columnCount + 3).Value = yearlyChange
+                    Cells(stockCount - 1, columnCount + 4).Value = changePercentage
+                    Cells(stockCount - 1, columnCount + 4).NumberFormat = "0.00%"
                 End If
-            Else
+                
+                ' Pulls open value for a new stock.
                 yearOpen = Cells(i, 3).Value
+                
+                ' Assigns volTotal to previous stock and sets it to the first value for the new stock.
+                Cells(stockCount - 1, columnCount + 5).Value = volTotal
+                volTotal = Cells(i, 7).Value
+                
+            ' ELSE: When it's not a new stock, just increase the volTotal variable.
+            Else
+                volTotal = volTotal + Cells(i, 7).Value
             End If
         Next i
                 
+        ' FOR LOOP / IF STATEMENT: Does color coding for yearlyChange column.
         For i = 2 To stockCount
-            ' Conditional formatting for "Yearly Change" column.
             If Cells(i, columnCount + 3) > 0 Then
                 Cells(i, columnCount + 3).Interior.ColorIndex = 4
             ElseIf Cells(i, columnCount + 3) < 0 Then
                 Cells(i, columnCount + 3).Interior.ColorIndex = 3
             End If
         Next i
+        
     Next ws
 End Sub
