@@ -1,7 +1,6 @@
 Attribute VB_Name = "Module2"
 Sub stockAnalysis()
     ' Full variable assignments. Some as longs or longlongs because I was running into overflow errors.
-    ' NEED TO CHANGE SOME TO INTEGERS.
     Dim rowCount As LongLong
     Dim columnCount As Long
     Dim stockCount As Integer
@@ -83,7 +82,6 @@ Sub stockAnalysis()
                 End If
                 
                 ' Assigns volTotal to previous stock and sets it to the first value for the new stock.
-                
                 volTotal = Cells(i, 7).Value
                 
             ' ELSE: When it's not a new stock, just increase the volTotal variable.
