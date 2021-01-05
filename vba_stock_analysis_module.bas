@@ -4,7 +4,7 @@ Sub stockAnalysis()
     ' NEED TO CHANGE SOME TO INTEGERS.
     Dim rowCount As LongLong
     Dim columnCount As Long
-    Dim stockCount As Long
+    Dim stockCount As Integer
     Dim volTotal As LongLong
     Dim i As LongLong
     Dim conditionalRange As Range
@@ -14,14 +14,21 @@ Sub stockAnalysis()
     Dim changePercentage As Double
     Dim ws As Worksheet
     
+    ' Challenge Variables
+    Dim greatestPercentageIncrease As Double
+    Dim gpi As String
+    Dim greatestPercentageDecrease As Double
+    Dim gpd As String
+    Dim volTotalHigh As LongLong
+    Dim vthStock As String
+    
     ' FOR LOOP: Full loop to iterate through all the sheets.
     For Each ws In Sheets
         ws.Activate
         
         ' Defines default values for variables that reset for each sheet.
-        stockCount = 1
+        stockCount = 0
         volTotal = 0
-        i = 2
         yearOpen = 0
     
         ' Counts number of columns and rows with data.
@@ -33,6 +40,12 @@ Sub stockAnalysis()
         Cells(1, columnCount + 3).Value = "Yearly Change"
         Cells(1, columnCount + 4).Value = "Percent Change"
         Cells(1, columnCount + 5).Value = "Total Stock Volume"
+        ' Challenge headers.
+        Cells(1, columnCount + 8).Value = "Ticker"
+        Cells(1, columnCount + 9).Value = "Value"
+        Cells(2, columnCount + 7).Value = "Greatest % Increase"
+        Cells(3, columnCount + 7).Value = "Greatest % Decrease"
+        Cells(4, columnCount + 7).Value = "Greatest Total Volume"
         
         ' FOR LOOP: Iterates through stocks, row by row.
         For i = 2 To rowCount + 1
@@ -48,30 +61,29 @@ Sub stockAnalysis()
                 
                 ' Increase stock count and add new stock to list.
                 stockCount = stockCount + 1
-                Cells(stockCount, columnCount + 2).Value = Cells(i, 1).Value
+                Cells(stockCount + 1, columnCount + 2).Value = Cells(i, 1).Value
                 
                 ' IF STATEMENT: For the first line of each sheet, don't try to pull the previous closing price because it doesn't exist.
                 If i = 2 Then
-                    Debug.Print (i)
                 Else
                     yearClose = Cells(i - 1, 6).Value
                     yearlyChange = yearClose - yearOpen
                     changePercentage = (yearlyChange / yearOpen)
-                    
-                    Debug.Print (yearOpen)
-                    Debug.Print (yearClose)
-                    Debug.Print (yearlyChange)
                     ' Simple cell assignments for yearlyChange and changePercentage.
-                    Cells(stockCount - 1, columnCount + 3).Value = yearlyChange
-                    Cells(stockCount - 1, columnCount + 4).Value = changePercentage
-                    Cells(stockCount - 1, columnCount + 4).NumberFormat = "0.00%"
+                    Cells(stockCount, columnCount + 3).Value = yearlyChange
+                    Cells(stockCount, columnCount + 4).Value = changePercentage
+                    Cells(stockCount, columnCount + 4).NumberFormat = "0.00%"
+                    
+                    Cells(stockCount, columnCount + 5).Value = volTotal
+                End If
+                If Cells(i, 3).Value = 0 Then
+                Else
+                    ' Pulls open value for a new stock.
+                    yearOpen = Cells(i, 3).Value
                 End If
                 
-                ' Pulls open value for a new stock.
-                yearOpen = Cells(i, 3).Value
-                
                 ' Assigns volTotal to previous stock and sets it to the first value for the new stock.
-                Cells(stockCount - 1, columnCount + 5).Value = volTotal
+                
                 volTotal = Cells(i, 7).Value
                 
             ' ELSE: When it's not a new stock, just increase the volTotal variable.
@@ -81,13 +93,43 @@ Sub stockAnalysis()
         Next i
                 
         ' FOR LOOP / IF STATEMENT: Does color coding for yearlyChange column.
-        For i = 2 To stockCount
+        greatestPercentageIncrease = 0
+        greatestPercentageDecrease = 0
+        volTotalHigh = 0
+        For i = 2 To stockCount + 1
             If Cells(i, columnCount + 3) > 0 Then
                 Cells(i, columnCount + 3).Interior.ColorIndex = 4
             ElseIf Cells(i, columnCount + 3) < 0 Then
                 Cells(i, columnCount + 3).Interior.ColorIndex = 3
             End If
+            
+            ' Challenges
+            If Cells(i, columnCount + 4).Value > 0 Then
+                If Cells(i, columnCount + 4).Value > greatestPercentageIncrease Then
+                    greatestPercentageIncrease = Cells(i, columnCount + 4).Value
+                    gpi = Cells(i, 1).Value
+                End If
+            ElseIf Cells(i, columnCount + 4).Value < 0 Then
+                If Cells(i, columnCount + 4).Value < greatestPercentageDecrease Then
+                    greatestPercentageDecrease = Cells(i, columnCount + 4).Value
+                    gpd = Cells(i, 1).Value
+                End If
+            End If
+            
+            If Cells(i, columnCount + 5).Value > volTotalHigh Then
+                volTotalHigh = Cells(i, columnCount + 5).Value
+                vthStock = Cells(i, 1).Value
+            End If
         Next i
+        Cells(2, columnCount + 8).Value = gpi
+        Cells(2, columnCount + 9).Value = greatestPercentageIncrease
+        Cells(2, columnCount + 9).NumberFormat = "0.00%"
+        Cells(3, columnCount + 8).Value = gpd
+        Cells(3, columnCount + 9).Value = greatestPercentageDecrease
+        Cells(3, columnCount + 9).NumberFormat = "0.00%"
+        Cells(4, columnCount + 8).Value = vthStock
+        Cells(4, columnCount + 9).Value = volTotalHigh
         
+        Columns("I:P").AutoFit
     Next ws
 End Sub
